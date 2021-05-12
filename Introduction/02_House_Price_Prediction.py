@@ -109,15 +109,6 @@ with tf.Session() as sess:
     plt.show()
 
     #plt.savefig('Introduction/Learned_Regression.pdf') # Save fig
-=======
-# plot generated house and size 
-plt.plot(house_size, house_price, "bx") # bx = blue x
-plt.ylabel("Price")
-plt.xlabel("Size")
-plt.show() 
-
-
->>>>>>> 0e670d50d806fb30ad9f2aedc30f511ecc281b35
  
 
 

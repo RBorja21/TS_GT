@@ -15,7 +15,7 @@ house_size = np.random.randint(low=1000, high=5300, size=num_hose)
 np.random.seed(42)
 house_price = house_size * 100.0 + np.random.randint(low=20000, high=70000, size=num_hose)
 
-<<<<<<< HEAD
+
 
 # normalized values to prevent under/overflows.
 def normalize(array):

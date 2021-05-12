@@ -107,7 +107,7 @@ with tf.Session() as sess:
     plt.legend(loc='upper left')
     plt.show()
 
-    #plt.savefig('Introduction/Learned_Regression.pdf')
+    #plt.savefig('Introduction/Learned_Regression.pdf') # Save fig
  
 
 

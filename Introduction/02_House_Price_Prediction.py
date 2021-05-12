@@ -15,6 +15,7 @@ house_size = np.random.randint(low=1000, high=5300, size=num_hose)
 np.random.seed(42)
 house_price = house_size * 100.0 + np.random.randint(low=20000, high=70000, size=num_hose)
 
+<<<<<<< HEAD
 
 # normalized values to prevent under/overflows.
 def normalize(array):
@@ -108,6 +109,15 @@ with tf.Session() as sess:
     plt.show()
 
     #plt.savefig('Introduction/Learned_Regression.pdf') # Save fig
+=======
+# plot generated house and size 
+plt.plot(house_size, house_price, "bx") # bx = blue x
+plt.ylabel("Price")
+plt.xlabel("Size")
+plt.show() 
+
+
+>>>>>>> 0e670d50d806fb30ad9f2aedc30f511ecc281b35
  
 
 

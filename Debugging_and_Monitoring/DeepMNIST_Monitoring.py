@@ -1,6 +1,23 @@
 import tensorflow as tf 
 from tensorflow.examples.tutorials.mnist import input_data 
 
+# define path to TensorBoar log files 
+logPath = "./tb_logs/"
+
+
+# adds summaries statistics for use in TensorBoard visualization
+def variable_summaries(var):
+    with tf.name_scope('summaries'):
+        mean = tf.reduce_mean(var)
+        tf.summary.scalar('mean', mean)
+        with tf.name_scope('stddev'):
+            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        tf.summary.scalar('stddev', stddev)
+        tf.summary.scalar('max', tf.reduce_max(var))
+        tf.summary.scalar('min', tf.reduce_min(var))
+        tf.summary.histogram('histogram', var)
+
+
 # create input object which reads data from MNIST datasets. Perform one-hot encoding to define the digit
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True) 
 
@@ -8,16 +25,19 @@ mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 sess = tf.InteractiveSession()
 
 # define placeholders for MNIST input data 
-x = tf.placeholder(tf.float32, shape=[None, 784])
-y_ = tf.placeholder(tf.float32, [None, 10])
+with tf.name_scope("MNIST_Input"):
+    x = tf.placeholder(tf.float32, shape=[None, 784], name="x")
+    y_ = tf.placeholder(tf.float32, [None, 10], name="y_")
 
 # change the MNIST input data from a list of values to a 28 X 28 pixel X 1 grayscale value cube 
 #   which the Convolution NN can use. 
-x_image = tf.reshape(x, [-1, 28, 28,1], name="x_image")
+with tf.name_scope("Input_Reshape"):
+    x_image = tf.reshape(x, [-1, 28, 28,1], name="x_image") 
+    tf.summary.image('input_img', x_image, 5)
 
 # define helper functions to created weights and baises variables, and convolution, and pooling layers
 # we are using RELU as our activiation fucntion. These must be initialized to a small positive number
-# and with some noise so you don´t end up goint to zero when comparing diffs.. 
+# and with some noise so you don´t end up goint to zero when comparing diffs. 
 def weight_variable(shape, name=None):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial, name=name)
@@ -37,11 +57,22 @@ def max_pool_2x2(x, name=None):
 # define layers in the NN
 
 # 1st Convolution layers 
-with tf.name_scope('Conv1'): # 32 features for each 5X5 patch the image 
-    W_conv1 = weight_variable([5, 5, 1, 32], name="weight") #tamaño del filtro=5x5, 1=# channels; 32=cuántas features determinará cada filtro
-    b_conv1 = bias_variable([32], name="bias")
+with tf.name_scope('Conv1'): 
+    # 32 features for each 5X5 patch the image 
+    with tf.name_scope('weights'):
+        W_conv1 = weight_variable([5, 5, 1, 32], name="weight") #tamaño del filtro=5x5, 1=# channels; 32=cuántas features determinará cada filtro
+        variable_summaries(W_conv1)
+    
+    with tf.name_scope('biases'):
+        b_conv1 = bias_variable([32], name="bias")
+        variable_summaries(b_conv1)
+
     # do convolution on images, add bias and push through RELU activation
-    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1, name="conv2d") + b_conv1, name="relu")
+    conv1_wx_b = conv2d(x_image, W_conv1, name="conv2d") + b_conv1
+    tf.summary.histogram('conv1_wx_b', conv1_wx_b)
+    h_conv1 = tf.nn.relu(conv1_wx_b, name="relu")
+    tf.summary.histogram('h_conv1', h_conv1)
+
     # take results and run through max_pool
     h_pool1 = max_pool_2x2(h_conv1, name="pool")
 
@@ -49,10 +80,18 @@ with tf.name_scope('Conv1'): # 32 features for each 5X5 patch the image
 # 2nd convolution layer 
 with tf.name_scope('Conv2'):
     # process the 32 features from Convolution layer 1, in 5 X 5 patch. Return 64 features weights and biases 
-    W_conv2 = weight_variable([5, 5, 32, 64], name='weight')
-    b_conv2 = bias_variable([64], name='bias')
+    with tf.name_scope('weights'):
+        W_conv2 = weight_variable([5, 5, 32, 64], name='weight')
+        variable_summaries(W_conv2)
+    with tf.name_scope('biases'):
+        b_conv2 = bias_variable([64], name='bias')
+        variable_summaries(b_conv2)
+
     # do convolution of the output of the 1st convolution layer. Pool results 
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2, name='conv2') + b_conv2, name='relu')
+    conv2_wx_b = conv2d(h_pool1, W_conv2, name='conv2') + b_conv2
+    tf.summary.histogram('conv2_wx_b', conv2_wx_b)
+    h_conv2 = tf.nn.relu(conv2_wx_b, name='relu')
+    tf.summary.histogram('h_conv2', h_conv2)
     h_pool2 = max_pool_2x2(h_conv2)
 
 with tf.name_scope('FC'):
@@ -79,24 +118,36 @@ with tf.name_scope("Readout"):
 y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 # loss measurement 
-cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_conv, labels=y_))
+with tf.name_scope("cross_entropy"):
+    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_conv, labels=y_))
 
 # loss optimization
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+with tf.name_scope("loss_optimizer"):
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 
-# what is correct 
-correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_,1))
-# how accurate is it?
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+with tf.name_scope("accuracy"):
+    # what is correct 
+    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_,1))
+    # how accurate is it?
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+tf.summary.scalar("cross_entropy_scl", cross_entropy)
+tf.summary.scalar("training_accuracy", accuracy)
+
+# TB - Merge summaries
+summarize_all = tf.summary.merge_all()
 
 # initialize all of the variables 
 sess.run(tf.global_variables_initializer())
+
+# TB - write the default graph out so we van view it´s structure
+tbWriter = tf.summary.FileWriter(logPath, sess.graph)
 
 # Train model 
 import time 
 
 # define number of steps and how often we display progress
-num_steps = 3000
+num_steps = 2000
 display_every = 100
 
 # start timer 
@@ -105,7 +156,8 @@ end_time = time.time()
 
 for i in range(num_steps):
     batch = mnist.train.next_batch(50)
-    train_step.run(feed_dict={x: batch[0], y_:batch[1], keep_prob: 0.5})
+    _, summary = sess.run([train_step, summarize_all], feed_dict={x: batch[0], y_:batch[1], keep_prob: 0.5})
+ 
 
     # periodic status display
     if i%display_every == 0:
@@ -114,6 +166,8 @@ for i in range(num_steps):
         })
         end_time = time.time()
         print("step {0}, elapsed time {1:.2f} seconds, training accuracy {2:.3f}%".format(i, end_time-start_time, train_accuracy*100))
+        # write summary to log
+        tbWriter.add_summary(summary, i)
 
 # display summary
 # time to train 

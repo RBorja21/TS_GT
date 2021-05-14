@@ -106,7 +106,7 @@ def predict_image_class(imagePath, labelPath):
         answer = labels[top_k[0]]
         return answer
 
-# Get the path to the image you want to predict..
+# Get the path to the image you want to predict.
 if __name__ == '__main__':
     
     # Ensure the user passes the image_path

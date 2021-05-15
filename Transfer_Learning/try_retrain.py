@@ -5,7 +5,7 @@
     To use the program:
     1. Update MODEL_PATH and LABEL_PATH to point to the where you wrote the retrained Inception Model
        and the output lables for your new classes
-    2. Get a jpeg image you want to classify.  It must have a .jpg or .jpeg extension.
+    2. Get a jpeg image you want to classify.  It must have a .jpg or .jpeg extension
     3. Run this program with the command:
     
             python try-retrain.py <path to your jpeg image>

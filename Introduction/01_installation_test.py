@@ -11,3 +11,5 @@ a = tf.constant(20)
 b = tf.constant(21)
 
 print(' a + b = {0}'.format(sess.run(a + b)))
+
+sess.close()

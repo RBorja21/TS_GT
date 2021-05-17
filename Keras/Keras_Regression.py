@@ -46,5 +46,7 @@ model.compile(loss='mean_squared_error', optimizer='sgd') # Loss and optimiezer;
 model.fit(train_house_size_norm, train_price_norm, nb_epoch=300)
 
 # note: fit cost values will be different because we did not use NN in original 
-score = model.evaluate(test_house_price_norm, test_house_price_norm)
-print("\nloss on test : {0}".format(score))
+score_01 = model.evaluate(test_house_price_norm, test_house_price_norm)
+score_02 = model.evaluate(train_house_size_norm, train_price_norm)
+print("\nloss on test : {0}".format(score_01))
+print("\nloss on train : {0}".format(score_02)) 
